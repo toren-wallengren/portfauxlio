@@ -48,7 +48,7 @@ def calculate_portfolio_value(unit_vectors, price_vectors):
 def gradient_descent(T, N, unit_vectors, price_vectors, learning_rate=0.00001, iterations=10000):
     D = build_operator_D(T)
     DtD = D.T @ D
-    #DtD[0, 0] = 1
+    # DtD[0, 0] = 1
 
     for _ in range(iterations):
         gradients = np.zeros_like(unit_vectors)
@@ -72,10 +72,12 @@ def gradient_descent(T, N, unit_vectors, price_vectors, learning_rate=0.00001, i
 
     return unit_vectors
 
+
 def display_total_portfolio_value(unit_vectors, price_vectors):
     V = calculate_portfolio_value(unit_vectors, price_vectors)
     print("Total Portfolio Value:")
     print(V)
+
 
 def generate_random_price_vectors(T, num_vectors, start_price_range=(10, 50), price_step_range=(0, 5)):
     """
@@ -102,21 +104,23 @@ def generate_random_price_vectors(T, num_vectors, start_price_range=(10, 50), pr
         price_vectors.append(price_vector)
     return price_vectors
 
-# Example usage
-T = 30
-num_vectors = 5
-price_vectors = generate_random_price_vectors(T, num_vectors)
 
-print("Random Price Vectors:")
-print(price_vectors)
+if __name__ == "__main__":
+    # Example usage
+    T = 30
+    num_vectors = 5
+    price_vectors = generate_random_price_vectors(T, num_vectors)
 
-unit_vectors = initialize_portfolio(T, 10000, 15000, price_vectors)
-print("Initial Unit Vectors:")
-print(unit_vectors.astype(int))
+    print("Random Price Vectors:")
+    print(price_vectors)
 
-unit_vectors = gradient_descent(T, len(price_vectors), unit_vectors, price_vectors)
+    unit_vectors = initialize_portfolio(T, 10000, 15000, price_vectors)
+    print("Initial Unit Vectors:")
+    print(unit_vectors.astype(int))
 
-print("Optimized Unit Vectors:")
-print(unit_vectors.astype(int))
+    unit_vectors = gradient_descent(T, len(price_vectors), unit_vectors, price_vectors)
 
-display_total_portfolio_value(unit_vectors.astype(int), price_vectors)
+    print("Optimized Unit Vectors:")
+    print(unit_vectors.astype(int))
+
+    display_total_portfolio_value(unit_vectors.astype(int), price_vectors)
