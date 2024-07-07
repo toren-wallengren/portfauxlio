@@ -21,11 +21,12 @@ class TargetPortfolioValueObjectiveFunction:
     so to compute the gradient, we need to do computations on all the underlying assets.
     """
 
-    def __init__(self, target_portfolio_values, price_vectors):
+    def __init__(self, target_portfolio_values, price_vectors, weight):
         num_of_assets, num_of_days = price_vectors.shape
         self.tvd = TargetVectorDifferenceOperator(target_portfolio_values)
         self.price_vectors = [np.diag(price_vectors[i, :]) for i in range(num_of_assets)]
         self.operators = self._initialize_operators(num_of_assets)
+        self.weight = weight
 
     def _initialize_operators(self, num_of_assets):
         """
@@ -50,7 +51,7 @@ class TargetPortfolioValueObjectiveFunction:
         value_vectors = [price_vector @ unit_vector for price_vector, unit_vector in
                          zip(self.price_vectors, unit_vectors)]
         total_portfolio_value = np.sum(value_vectors, axis=0)
-        return gradient / np.linalg.norm(self.tvd.apply(total_portfolio_value))
+        return self.weight * gradient / np.linalg.norm(self.tvd.apply(total_portfolio_value))
 
 
 class FirstOrderUnitSmoothingObjectiveFunction:
@@ -67,11 +68,12 @@ class FirstOrderUnitSmoothingObjectiveFunction:
     The gradient then is given by K^T @ K @ U / ||K @ U||, which we can use for minimization.
     """
 
-    def __init__(self, initial_unit_vectors):
+    def __init__(self, initial_unit_vectors, weight):
         num_of_assets, num_of_days = initial_unit_vectors.shape
         self.fod = [FirstOrderDifferenceOperator(num_of_days, initial_value=initial_unit_vectors[i, 1])
                     for i in range(num_of_assets)]
         self.num_of_assets = num_of_assets
+        self.weight = weight
 
     def compute_gradient(self, unit_vectors):
         gradient = np.zeros_like(unit_vectors)
@@ -82,4 +84,4 @@ class FirstOrderUnitSmoothingObjectiveFunction:
             norm = np.linalg.norm(apply_op)
             grad = apply_gram / norm
             gradient[i, :] += grad
-        return gradient
+        return self.weight * gradient

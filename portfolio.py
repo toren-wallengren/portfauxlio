@@ -12,9 +12,9 @@ class Portfolio:
         self.desired_portfolio_value = desired_portfolio_value
         self.unit_vectors = generate_random_unit_vectors(self.price_vectors, desired_portfolio_value)
 
-    def perform_gradient_descent(self, learning_rate=0.01, iterations=100):
-        tpv = TargetPortfolioValueObjectiveFunction(self.desired_portfolio_value, self.price_vectors)
-        sm = FirstOrderUnitSmoothingObjectiveFunction(self.unit_vectors)
+    def perform_gradient_descent(self, learning_rate=1, iterations=100):
+        tpv = TargetPortfolioValueObjectiveFunction(self.desired_portfolio_value, self.price_vectors, 0.1)
+        sm = FirstOrderUnitSmoothingObjectiveFunction(self.unit_vectors, 0.01)
 
         total_iterations = iterations
         current_iteration = 0
