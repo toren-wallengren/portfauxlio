@@ -5,18 +5,20 @@ from operators import TargetVectorDifferenceOperator, FirstOrderDifferenceOperat
 
 class TargetPortfolioValueObjectiveFunction:
     """
-    This operator is the TargetVectorDifferenceOperator applied to the total portfolio value.
+    This objective function considers the operator TargetVectorDifferenceOperator applied to the total portfolio value.
 
-    Since the portfolio value is derived from the underlying price and unit vectors, the gradient is computed by
-    applying a whole family of linear operators to combinations of the unit vectors and summing them up.
+    Denote the total portfolio value vector as V = [1, v1, v2, ..., vn], and the TargetVectorDifferenceOperator as D.
 
-    For each pair of assets i and j, the gradient contribution is computed as:
-    P(i)*D.T*D*P(j)*u(j)
+    The product D @ V computes the difference between the total portfolio value and the target portfolio value. Each
+    component is the difference between the actual value and the target value for that day. We want to minimize these
+    components, which can be done by minimizing the norm of the vector D @ V.
 
-    where P(i) & P(j) are the price matrices of the assets, D is the target vector difference operator (and D.T is
-    its transpose), and u(j) is the unit vector of asset j.
+    The norm of the vector is denoted as ||D @ V|| = sqrt((D @ V)^T @ (D @ V)) = sqrt(V^T @ D^T @ D @ V).
 
-    The total gradient with respect to i is the sum of these contributions for all j (plus a normalization factor).
+    The gradient then is given by D^T @ D @ V / ||D @ V||, which we can use for minimization.
+
+    This expression is more complicated than it appears since each component of V is actually the sum over all assets,
+    so to compute the gradient, we need to do computations on all the underlying assets.
     """
 
     def __init__(self, target_portfolio_values, price_vectors):
@@ -53,7 +55,16 @@ class TargetPortfolioValueObjectiveFunction:
 
 class FirstOrderUnitSmoothingObjectiveFunction:
     """
-    This operator is the FirstOrderDifferenceOperator applied to the unit vectors.
+    This objective function considers the FirstOrderDifferenceOperator applied to the unit vectors independently.
+
+    Denote the unit vectors as U = [u1, u2, ..., un], and the FirstOrderDifferenceOperator as K.
+
+    The product K @ U computes the first order difference of each unit vector. We want to minimize these differences,
+    which can be done by minimizing the norm of the vector K @ U.
+
+    The norm of the vector is denoted as ||K @ U|| = sqrt((K @ U)^T @ (K @ U)) = sqrt(U^T @ K^T @ K @ U).
+
+    The gradient then is given by K^T @ K @ U / ||K @ U||, which we can use for minimization.
     """
 
     def __init__(self, initial_unit_vectors):
