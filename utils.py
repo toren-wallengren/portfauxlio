@@ -15,7 +15,7 @@ def generate_random_unit_vectors(price_vectors, total_value_vector):
     return result
 
 
-def generate_random_price_vectors(num_of_assets, num_of_days, start_price_range=(50, 100), price_step_range=(-2, 3)):
+def generate_random_price_vectors(num_of_assets, num_of_days, start_price_range=(75, 100), price_step_range=(-2, 3)):
     start_prices = np.random.randint(*start_price_range, num_of_assets)
     price_steps = np.random.randint(*price_step_range, size=(num_of_assets, num_of_days - 1))
     price_vectors = np.ones((num_of_assets, num_of_days + 1)) / num_of_assets
@@ -30,7 +30,7 @@ def build_total_value_operator(num_of_days, desired_total_value):
     D = np.zeros((n, n))
     for i in range(n):
         if i > 0:
-            D[i, 0] = -desired_total_value
+            D[i, 0] = -desired_total_value[i]
         D[i, i] = 1
     return D
 
@@ -45,12 +45,3 @@ def build_local_value_operator(num_of_days, initial_value):
             K[i, i - 1] = -1
         K[i, i] = 1
     return K
-
-
-def build_loss_operator(num_of_days, initial_value):
-    n = num_of_days + 1
-    lower_triangle = np.tril(np.ones((n, n)))
-    lower_triangle[:, 0] = 0
-    lower_triangle[0, 0] = 1
-    lower_triangle[1, 0] = -initial_value
-    return lower_triangle
