@@ -1,5 +1,5 @@
-from operators import TargetPortfolioValuesOperator
-from utils import generate_random_unit_vectors, build_local_value_operator
+from objective_functions import TargetPortfolioValueObjectiveFunction, FirstOrderUnitSmoothingObjectiveFunction
+from utils import generate_random_unit_vectors
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -13,12 +13,8 @@ class Portfolio:
         self.unit_vectors = generate_random_unit_vectors(self.price_vectors, desired_portfolio_value)
 
     def perform_gradient_descent(self, learning_rate=0.01, iterations=100):
-        T = self.num_of_days
-        N = self.num_of_assets
-        tpv = TargetPortfolioValuesOperator(self.desired_portfolio_value, self.price_vectors)
-
-        initial_units = self.unit_vectors[:, 1]
-        K = [build_local_value_operator(T - 1, initial_units[n]) for n in range(N)]
+        tpv = TargetPortfolioValueObjectiveFunction(self.desired_portfolio_value, self.price_vectors)
+        sm = FirstOrderUnitSmoothingObjectiveFunction(self.unit_vectors)
 
         total_iterations = iterations
         current_iteration = 0
@@ -26,21 +22,10 @@ class Portfolio:
 
         for _ in range(iterations):
             gradients_tpv = tpv.compute_gradient(self.unit_vectors)
-            gradients_smoothing = np.zeros_like(self.unit_vectors)
-            for n in range(N):
-                unit_n = self.unit_vectors[n, :]
-                Kn = K[n]
-                Ku = Kn @ unit_n
-                Ku_norm = np.linalg.norm(Ku)
-                gradients_smoothing[n, :] = Kn.T @ Ku / Ku_norm
-
-            gradients_total = gradients_tpv + gradients_smoothing
+            gradients_sm = sm.compute_gradient(self.unit_vectors)
+            gradients_total = gradients_tpv + gradients_sm
             gradients_total[:, 0] = 0
             self.unit_vectors -= learning_rate * gradients_total
-
-            # Optional: Clamp values to avoid instability (depending on the specific problem constraints)
-            self.unit_vectors = np.maximum(self.unit_vectors, 0)
-
             percentage_complete = current_iteration / total_iterations * 100
             current_iteration += 1
             if percentage_complete >= display_threshold:

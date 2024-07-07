@@ -32,53 +32,27 @@ class TargetVectorDifferenceOperator:
     def apply_gram(self, vector):
         return self.gram_matrix @ vector
 
-    def compute_gradient(self, vector):
-        return 2 * self.apply_gram(vector)
 
-
-class TargetPortfolioValuesOperator:
+class FirstOrderDifferenceOperator:
     """
-    This operator is the TargetVectorDifferenceOperator applied to the total portfolio value.
+    Operator that computes the first order difference of a vector. The matrix representation takes the form
+    [[1, 0, 0, ..., 0],
+    [-v0, 1, 0, ..., 0],
+    [0, -1, 1, ..., 0],
+    ...
+    [0, 0, 0, ..., 1]]
 
-    Since the portfolio value is derived from the underlying price and unit vectors, the gradient is computed by
-    applying a whole family of linear operators to combinations of the unit vectors and summing them up.
-
-    For each pair of assets i and j, the gradient contribution is computed as:
-    P(i)*D.T*D*P(j)*u(j)
-
-    where P(i) & P(j) are the price matrices of the assets, D is the target vector difference operator (and D.T is
-    its transpose), and u(j) is the unit vector of asset j.
-
-    The total gradient with respect to i is the sum of these contributions for all j (plus a normalization factor).
+    There is an optional parameter initial_value that can be used to force the gradient to pull the first element
+    towards that fixed value.
     """
 
-    def __init__(self, target_portfolio_values, price_vectors):
-        num_of_assets, num_of_days = price_vectors.shape
-        self.tvd = TargetVectorDifferenceOperator(target_portfolio_values)
-        self.price_vectors = [np.diag(price_vectors[i, :]) for i in range(num_of_assets)]
-        self.operators = self._initialize_operators(num_of_assets)
+    def __init__(self, num_of_days, initial_value=1):
+        self.matrix = np.eye(num_of_days) - np.eye(num_of_days, k=-1)
+        self.matrix[1, 0] = -initial_value
+        self.gram_matrix = self.matrix.T @ self.matrix
 
-    def _initialize_operators(self, num_of_assets):
-        """
-        We initialize all underlying matrices used in the gradient computation here, rather than redoing matrix
-        calculations at each iteration. It is not clear whether this is the best strategy. We should investigate
-        performance implications at some time in the future.
-        :param num_of_assets:
-        :return:
-        """
-        return [self.tvd.apply_gram(self.price_vectors[i]) for i in range(num_of_assets)]
+    def apply(self, vector):
+        return self.matrix @ vector
 
-    def compute_gradient(self, unit_vectors):
-        gradient = np.zeros_like(unit_vectors)
-        products = []
-        for i, vector_1 in enumerate(unit_vectors):
-            for j, vector_2 in enumerate(unit_vectors):
-                if len(products) <= j:
-                    # this product is needed for every i, so caching it here might improve performance
-                    products.append(self.operators[j] @ vector_2)
-                gradient[i, :] += self.price_vectors[i] @ products[j]
-
-        value_vectors = [price_vector @ unit_vector for price_vector, unit_vector in
-                         zip(self.price_vectors, unit_vectors)]
-        total_portfolio_value = np.sum(value_vectors, axis=0)
-        return gradient / np.linalg.norm(self.tvd.apply(total_portfolio_value))
+    def apply_gram(self, vector):
+        return self.gram_matrix @ vector
