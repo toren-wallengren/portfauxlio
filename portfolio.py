@@ -14,7 +14,7 @@ class Portfolio:
 
     def perform_gradient_descent(self, learning_rate=1, iterations=100):
         tpv = TargetPortfolioValueObjectiveFunction(self.desired_portfolio_value, self.price_vectors, 0.1)
-        sm = FirstOrderUnitSmoothingObjectiveFunction(self.unit_vectors, 0.01)
+        sm = FirstOrderUnitSmoothingObjectiveFunction(self.unit_vectors, 0.1)
 
         total_iterations = iterations
         current_iteration = 0
