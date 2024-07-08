@@ -1,6 +1,6 @@
 import numpy as np
 
-from operators import TargetVectorDifferenceOperator, FirstOrderDifferenceOperator
+from operators import TargetVectorDifferenceOperator, FirstOrderDifferenceOperator, ProfitLossOperator
 
 
 class TargetPortfolioValueObjectiveFunction:
@@ -81,6 +81,27 @@ class FirstOrderUnitSmoothingObjectiveFunction:
             unit_vector = unit_vectors[i, :]
             apply_gram = self.fod[i].apply_gram(unit_vector)
             apply_op = self.fod[i].apply(unit_vector)
+            norm = np.linalg.norm(apply_op)
+            grad = apply_gram / norm
+            gradient[i, :] += grad
+        return self.weight * gradient
+
+
+class ProfitLossObjectiveFunction:
+
+    def __init__(self, price_vectors, initial_unit_vectors, weight):
+        num_of_assets, num_of_days = initial_unit_vectors.shape
+        self.weight = weight
+        self.num_of_assets = num_of_assets
+        self.plo = [ProfitLossOperator(price_vector, initial_unit_vectors[i, 1]*price_vector[1]) for i, price_vector in
+                    enumerate(price_vectors)]
+
+    def compute_gradient(self, unit_vectors):
+        gradient = np.zeros_like(unit_vectors)
+        for i in range(self.num_of_assets):
+            unit_vector = unit_vectors[i, :]
+            apply_gram = self.plo[i].apply_gram(unit_vector)
+            apply_op = self.plo[i].apply(unit_vector)
             norm = np.linalg.norm(apply_op)
             grad = apply_gram / norm
             gradient[i, :] += grad

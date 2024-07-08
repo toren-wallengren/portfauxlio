@@ -3,8 +3,8 @@ import numpy as np
 
 class DataGenerator:
 
-    def __init__(self):
-        self.rng = np.random.default_rng()
+    def __init__(self, seed=None):
+        self.rng = np.random.default_rng(seed)
 
     def generate_random_normalized_matrix(self, num_of_rows, num_of_cols, axis=0):
         """
@@ -84,3 +84,23 @@ class DataGenerator:
         random_walk = self.generate_random_walk(initial_values, num_of_days, distribution, mu, sigma, lam)[0]
         value_vector[1:] = random_walk
         return value_vector
+
+    def generate_linear_portfolio_value_vector(self, num_of_days, start_value=10000, end_value=11000):
+        """
+        Portfolio value vectors are of length num_of_days + 1. The first element of each portfolio value vector is set
+        to one, and the remaining elements are generated using a linear function.
+        :param num_of_days:
+        :param start_value:
+        :param end_value:
+        :return:
+        """
+        value_vector = np.ones(num_of_days + 1)
+        value_vector[1:] = np.linspace(start_value, end_value, num_of_days)
+        return value_vector
+
+    def generate_random_unit_vectors(self, price_vectors, total_value_vector):
+        N, T = price_vectors.shape
+        normalized_matrix = self.generate_random_normalized_matrix(N, T)
+        result = total_value_vector * normalized_matrix / price_vectors
+        result[:, 0] = 1
+        return result

@@ -56,3 +56,41 @@ class FirstOrderDifferenceOperator:
 
     def apply_gram(self, vector):
         return self.gram_matrix @ vector
+
+
+class ProfitLossOperator:
+    """
+    Operator that computes the profit and loss of a vector with respect to a price vector. If our price vector is
+    p = [1/N, p1, p2, ..., pN], and our initial value is v0, then the profit and loss operator in matrix form is given by
+    [[1,          0,         0, ...,             0, 0],
+    [-v0,        p1,         0, ...,             0, 0],
+    [-v0, (p2 - p1),        p2, ...,             0, 0],
+    [-v0, (p2 - p1), (p3 - p2), ...,             0, 0],
+    ...
+    [-v0, (p2 - p1), (p3 - p2), ..., (pN - p(N-1)), pN]]
+    """
+
+    def __init__(self, price_vector, initial_value):
+        num_of_days = len(price_vector)
+        self.matrix = np.zeros((num_of_days, num_of_days))
+        self.matrix[0, 0] = 1
+        self.matrix[1:, 0] = -initial_value
+        indices = np.tril_indices_from(self.matrix)
+        for i in range(len(indices[0])):
+            row, col = indices[0][i], indices[1][i]
+            if row == col:
+                if row == 0:
+                    continue
+                self.matrix[row, col] = price_vector[row]
+                continue
+            if col == 0:
+                continue
+            self.matrix[row, col] = price_vector[col+1] - price_vector[col]
+
+        self.gram_matrix = self.matrix.T @ self.matrix
+
+    def apply(self, vector):
+        return self.matrix @ vector
+
+    def apply_gram(self, vector):
+        return self.gram_matrix @ vector
